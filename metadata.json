@@ -1,0 +1,5 @@
+{
+  "name": "Socratic Discovery & News Engine",
+  "description": "An AI-powered learning platform that uses Socratic questioning to map your knowledge before delivering a personalized discovery report including current news, deep facts, and practical insights.",
+  "requestFramePermissions": []
+}
