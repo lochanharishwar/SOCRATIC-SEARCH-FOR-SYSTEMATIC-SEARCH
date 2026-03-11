@@ -19,3 +19,4 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Lv4BQMfnGRfs70-XMWqjWg
 3. Run the app:
    `npm run dev`
 4.Always be on Fullscreen so that it doest inconvienience The Search
+5.This can be customised to any subject,topic or field according to your wish
