@@ -16,6 +16,7 @@ Most search tools answer **what** you asked. Socratic Search answers **what you 
 | Same results for everyone | Tailored to your learning profile |
 | You filter the noise | AI filters the noise for you |
 | Query in → results out | Dialogue in → insight out |
+YOU MODIFY AS YOU ANT IT ACCORDING TO YOUR FIELD 
 
 ---
 
