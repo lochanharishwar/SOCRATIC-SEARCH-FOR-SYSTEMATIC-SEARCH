@@ -1,63 +1,942 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Socratic Discovery Engine</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Systematic Search — Personalized Intelligence</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
+    :root {
+      --ink:      #0d0d0d;
+      --ink-2:    #3a3a3a;
+      --ink-3:    #7a7a7a;
+      --surface:  #f5f4f0;
+      --surface-2:#eceae4;
+      --line:     #e0ddd6;
+      --accent:   #1a1a1a;
+      --gold:     #c9a96e;
+      --gold-lt:  #f0e8d8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f8fafc;
+      font-family: 'Sora', sans-serif;
+      background-color: var(--surface);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
-    .serif-title {
-      font-family: 'Playfair Display', serif;
+
+    /* ── Loading screen ── */
+    #app-loader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
     }
+    #app-loader.hidden { opacity: 0; visibility: hidden; }
+    .loader-wordmark {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .loader-bar {
+      width: 160px; height: 1px;
+      background: var(--line);
+      position: relative; overflow: hidden;
+    }
+    .loader-bar::after {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: var(--gold);
+      animation: sweep 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
+    @keyframes sweep { to { left: 100%; } }
+
+    /* ── Root ── */
+    #root {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Typography ── */
+    .serif { font-family: 'DM Serif Display', serif; }
+
+    /* ── Nav ── */
+    .site-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      display: flex; align-items: center;
+      padding: 0 clamp(1.5rem, 5vw, 3rem);
+      background: rgba(245,244,240,0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-wordmark {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .nav-tag {
+      margin-left: 10px;
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: var(--gold-lt);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .nav-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 1.5rem;
+    }
+    .nav-link {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--ink); }
+    .nav-cta {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--surface);
+      background: var(--ink);
+      padding: 7px 16px;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .nav-cta:hover { background: var(--ink-2); transform: translateY(-1px); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 80px clamp(1.5rem, 6vw, 4rem) 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      pointer-events: none;
+    }
+    .hero-bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.5;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    }
+    .hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+    }
+    .hero-orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, #c9a96e 0%, transparent 70%);
+      top: -100px; right: -100px;
+    }
+    .hero-orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #8fa8c8 0%, transparent 70%);
+      bottom: -100px; left: -50px;
+    }
+    .hero-inner {
+      position: relative; z-index: 1;
+      max-width: 780px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid rgba(201,169,110,0.35);
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 2rem;
+      background: var(--gold-lt);
+      animation: fadeUp 0.7s 0.2s both ease;
+    }
+    .hero-eyebrow-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    .hero-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.7s 0.35s both ease;
+    }
+    .hero-title-em {
+      font-style: italic;
+      color: var(--ink-2);
+    }
+    .hero-sub {
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      font-weight: 300;
+      line-height: 1.75;
+      color: var(--ink-2);
+      max-width: 540px;
+      margin: 0 auto 2.5rem;
+      animation: fadeUp 0.7s 0.5s both ease;
+    }
+    .hero-actions {
+      display: flex; align-items: center;
+      justify-content: center; gap: 1rem;
+      flex-wrap: wrap;
+      animation: fadeUp 0.7s 0.65s both ease;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; font-weight: 500;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--surface);
+      background: var(--ink);
+      padding: 13px 26px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #333; transform: translateY(-2px); }
+    .btn-primary svg { width: 14px; height: 14px; transition: transform 0.2s; }
+    .btn-primary:hover svg { transform: translateX(3px); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; font-weight: 500;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--ink-2);
+      border: 1px solid var(--line);
+      padding: 13px 26px;
+      border-radius: 6px;
+      text-decoration: none;
+      background: transparent;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--ink); color: var(--ink); background: var(--surface-2); }
+    .hero-scroll {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      z-index: 1;
+      animation: fadeUp 0.7s 1s both ease;
+    }
+    .hero-scroll span {
+      font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .scroll-line {
+      width: 1px; height: 36px;
+      background: linear-gradient(to bottom, var(--line), transparent);
+      animation: scrollDrop 1.4s ease infinite;
+    }
+    @keyframes scrollDrop {
+      0% { transform: scaleY(0); transform-origin: top; }
+      50% { transform: scaleY(1); transform-origin: top; }
+      51% { transform: scaleY(1); transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+      padding: 1.25rem clamp(1.5rem, 6vw, 4rem);
+      display: flex; align-items: center;
+      justify-content: center; gap: 3rem;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-val {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.6rem; color: var(--ink);
+    }
+    .stat-label {
+      font-size: 0.68rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink-3);
+      margin-top: 2px;
+    }
+    .stat-div { width: 1px; height: 32px; background: var(--line); }
+
+    /* ── Section base ── */
+    .section { padding: 7rem clamp(1.5rem, 6vw, 4rem); }
+    .section-eyebrow {
+      font-size: 0.65rem; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1; letter-spacing: -0.02em;
+      color: var(--ink); margin-bottom: 1.25rem;
+    }
+    .section-body {
+      font-size: 1rem; font-weight: 300;
+      line-height: 1.8; color: var(--ink-2);
+      max-width: 540px;
+    }
+
+    /* ── How it works ── */
+    .how-grid {
+      max-width: 1100px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: center;
+    }
+    .phases { display: flex; flex-direction: column; gap: 0; }
+    .phase {
+      display: flex; gap: 1.25rem;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .phase:first-child { border-top: 1px solid var(--line); }
+    .phase:hover .phase-title { color: var(--ink); }
+    .phase-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem; line-height: 1;
+      color: var(--line);
+      min-width: 2.5rem;
+      transition: color 0.2s;
+    }
+    .phase:hover .phase-num { color: var(--gold); }
+    .phase-content {}
+    .phase-title {
+      font-size: 0.95rem; font-weight: 500;
+      color: var(--ink-2); margin-bottom: 0.4rem;
+      transition: color 0.2s;
+    }
+    .phase-desc {
+      font-size: 0.85rem; font-weight: 300;
+      line-height: 1.7; color: var(--ink-3);
+    }
+    .phase-visual {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 2.5rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .pv-header {
+      display: flex; align-items: center; gap: 8px;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .pv-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .pv-title { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+    .pv-line {
+      height: 10px; border-radius: 5px;
+      background: var(--line);
+    }
+    .pv-line.short { width: 55%; }
+    .pv-line.med   { width: 75%; }
+    .pv-line.full  { width: 100%; }
+    .pv-line.gold  { background: var(--gold); opacity: 0.45; }
+    .pv-block {
+      border-radius: 8px;
+      background: white;
+      border: 1px solid var(--line);
+      padding: 1rem;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .pv-block-tag {
+      font-size: 0.6rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* ── Features ── */
+    .features-grid {
+      max-width: 1100px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .feature-card {
+      background: var(--surface);
+      padding: 2rem;
+      transition: background 0.2s;
+    }
+    .feature-card:hover { background: var(--surface-2); }
+    .feature-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: var(--gold-lt);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .feature-icon svg { width: 18px; height: 18px; color: var(--gold); }
+    .feature-title {
+      font-size: 0.9rem; font-weight: 500;
+      color: var(--ink); margin-bottom: 0.5rem;
+    }
+    .feature-desc {
+      font-size: 0.82rem; font-weight: 300;
+      line-height: 1.7; color: var(--ink-2);
+    }
+
+    /* ── Stack ── */
+    .stack-section {
+      background: var(--ink);
+      color: var(--surface);
+      padding: 7rem clamp(1.5rem, 6vw, 4rem);
+    }
+    .stack-inner { max-width: 1100px; margin: 0 auto; }
+    .stack-header { margin-bottom: 3rem; }
+    .stack-eyebrow { color: var(--gold); }
+    .stack-title { color: var(--surface); }
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .stack-item {
+      background: rgba(255,255,255,0.03);
+      padding: 1.75rem 1.5rem;
+      transition: background 0.2s;
+    }
+    .stack-item:hover { background: rgba(255,255,255,0.07); }
+    .stack-layer {
+      font-size: 0.6rem; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.3); margin-bottom: 0.5rem;
+    }
+    .stack-tech {
+      font-size: 0.95rem; font-weight: 500;
+      color: rgba(255,255,255,0.9); margin-bottom: 0.3rem;
+    }
+    .stack-desc {
+      font-size: 0.78rem; font-weight: 300;
+      color: rgba(255,255,255,0.45); line-height: 1.5;
+    }
+
+    /* ── Setup ── */
+    .setup-inner {
+      max-width: 760px; margin: 0 auto;
+    }
+    .setup-steps { display: flex; flex-direction: column; gap: 0; }
+    .setup-step {
+      display: flex; gap: 1.5rem;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .setup-step:first-child { padding-top: 0; }
+    .step-num-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+      flex-shrink: 0;
+    }
+    .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 500;
+      color: var(--ink-2);
+      background: var(--surface-2);
+      flex-shrink: 0;
+    }
+    .step-connector {
+      flex: 1; width: 1px;
+      background: var(--line);
+      margin-top: 6px;
+    }
+    .setup-content { flex: 1; padding-bottom: 0.5rem; }
+    .setup-title {
+      font-size: 0.9rem; font-weight: 500;
+      color: var(--ink); margin-bottom: 0.5rem;
+    }
+    .setup-desc {
+      font-size: 0.82rem; font-weight: 300;
+      line-height: 1.7; color: var(--ink-2);
+      margin-bottom: 1rem;
+    }
+    .code-block {
+      background: var(--ink);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.75);
+      overflow-x: auto;
+      position: relative;
+    }
+    .code-block .comment { color: rgba(255,255,255,0.3); }
+    .code-block .cmd { color: #7ec8a4; }
+    .code-block .string { color: #f0c98c; }
+    .code-pill {
+      display: inline;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.78rem;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--ink);
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center;
+      padding: 8rem clamp(1.5rem, 6vw, 4rem);
+      background: var(--surface-2);
+      border-top: 1px solid var(--line);
+    }
+    .cta-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.1; letter-spacing: -0.02em;
+      color: var(--ink); margin-bottom: 1rem;
+    }
+    .cta-sub {
+      font-size: 1rem; font-weight: 300;
+      color: var(--ink-2); margin-bottom: 2.5rem;
+    }
+
+    /* ── Footer ── */
+    .site-footer {
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+      padding: 2rem clamp(1.5rem, 6vw, 4rem);
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-copy {
+      font-size: 0.72rem; color: var(--ink-3);
+      font-weight: 300;
+    }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-link {
+      font-size: 0.72rem; color: var(--ink-3);
+      text-decoration: none; font-weight: 400;
+      transition: color 0.2s;
+    }
+    .footer-link:hover { color: var(--ink); }
+
+    /* ── Print ── */
     @media print {
-      .no-print {
-        display: none !important;
-      }
-      .print-only {
-        display: block !important;
-      }
-      .print-visible {
-        display: block !important;
-        opacity: 1 !important;
-        transform: none !important;
-      }
-      body {
-        background-color: white !important;
-      }
-      .page-break {
-        page-break-before: always;
-      }
-      .report-container {
-        padding: 0 !important;
-        max-width: 100% !important;
-      }
+      .site-nav, .hero-scroll, .stats-bar, .cta-section, .site-footer,
+      .no-print { display: none !important; }
+      body { background: white; }
+      .section { padding: 2rem 0; }
     }
-    .print-only {
-      display: none;
+    .print-only { display: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .how-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .phase-visual { display: none; }
+      .nav-right .nav-link { display: none; }
+      .stat-div { display: none; }
+      .stats-bar { gap: 2rem; }
     }
   </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+      "react/":        "https://esm.sh/react@^19.2.3/",
+      "react":         "https://esm.sh/react@^19.2.3",
+      "react-dom/":    "https://esm.sh/react-dom@^19.2.3/"
+    }
   }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+  </script>
+
+  <link rel="stylesheet" href="/index.css">
 </head>
 <body>
+
+  <!-- Loading screen -->
+  <div id="app-loader">
+    <span class="loader-wordmark">Systematic Search</span>
+    <div class="loader-bar"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="site-nav no-print">
+    <a href="#" class="nav-wordmark">Systematic Search</a>
+    <span class="nav-tag">Beta</span>
+    <div class="nav-right">
+      <a href="#how" class="nav-link">How it works</a>
+      <a href="#setup" class="nav-link">Setup</a>
+      <a href="https://github.com/lochanharishwar/SYSTEMATIC-SEARCH" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://ai.studio/apps/drive/1Lv4BQMfnGRfs70-XMWqjWgajDDJ0EYU6" class="nav-cta" target="_blank" rel="noopener">Try Live</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero no-print">
+    <div class="hero-bg">
+      <div class="hero-bg-grid"></div>
+      <div class="hero-orb hero-orb-1"></div>
+      <div class="hero-orb hero-orb-2"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-dot"></span>
+        Powered by Gemini 2.5 Pro
+      </div>
+      <h1 class="hero-title">
+        Search that knows<br>
+        <span class="hero-title-em">who you are</span>
+      </h1>
+      <p class="hero-sub">
+        A personalized intelligence engine. It opens a Socratic dialogue to map your background and goals — then synthesizes live web data into a bespoke Discovery Brief written specifically for you.
+      </p>
+      <div class="hero-actions">
+        <a href="https://ai.studio/apps/drive/1Lv4BQMfnGRfs70-XMWqjWgajDDJ0EYU6" class="btn-primary" target="_blank" rel="noopener">
+          Open live app
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+        <a href="https://github.com/lochanharishwar/SYSTEMATIC-SEARCH" class="btn-ghost" target="_blank" rel="noopener">
+          View on GitHub
+        </a>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-bar no-print">
+    <div class="stat">
+      <div class="stat-val serif">3</div>
+      <div class="stat-label">Dialogue phases</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat">
+      <div class="stat-val serif">&lt; 2min</div>
+      <div class="stat-label">To your brief</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat">
+      <div class="stat-val serif">100%</div>
+      <div class="stat-label">Personalized</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat">
+      <div class="stat-val serif">Live</div>
+      <div class="stat-label">Web data</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat">
+      <div class="stat-val serif">Free</div>
+      <div class="stat-label">To get started</div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <section class="section" id="how">
+    <div class="how-grid">
+      <div>
+        <p class="section-eyebrow">How it works</p>
+        <h2 class="section-title">Three phases.<br>One precise brief.</h2>
+        <p class="section-body" style="margin-bottom: 3rem;">
+          Most search engines treat everyone the same. Systematic Search opens a dialogue first — then builds a response that fits you specifically.
+        </p>
+        <div class="phases">
+          <div class="phase">
+            <span class="phase-num">01</span>
+            <div class="phase-content">
+              <div class="phase-title">Socratic Dialogue</div>
+              <div class="phase-desc">A short conversation maps your expertise level, goals, and preferred way of receiving information. Usually 3–5 questions. Never more than 2 minutes.</div>
+            </div>
+          </div>
+          <div class="phase">
+            <span class="phase-num">02</span>
+            <div class="phase-content">
+              <div class="phase-title">Intelligent Synthesis</div>
+              <div class="phase-desc">Gemini 2.5 Pro takes your profile and queries the live web — cross-referencing sources, weighing credibility, and identifying what actually matters to you.</div>
+            </div>
+          </div>
+          <div class="phase">
+            <span class="phase-num">03</span>
+            <div class="phase-content">
+              <div class="phase-title">Your Discovery Brief</div>
+              <div class="phase-desc">A structured, narrative research brief calibrated to your level. Not a list of links — a document that reads like a colleague who knows your work wrote it for you.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-visual">
+        <div class="pv-header">
+          <div class="pv-dot" style="background:#e6b95a"></div>
+          <div class="pv-dot" style="background:#7ec8a4"></div>
+          <div class="pv-dot" style="background:#8ab4d4"></div>
+          <span class="pv-title" style="margin-left:8px">Discovery Brief</span>
+        </div>
+        <div class="pv-block">
+          <div class="pv-block-tag">Context</div>
+          <div class="pv-line full"></div>
+          <div class="pv-line med"></div>
+        </div>
+        <div class="pv-block">
+          <div class="pv-block-tag">Core Findings</div>
+          <div class="pv-line full gold"></div>
+          <div class="pv-line med gold"></div>
+          <div class="pv-line short gold"></div>
+        </div>
+        <div class="pv-block">
+          <div class="pv-block-tag">Key Takeaways</div>
+          <div class="pv-line med"></div>
+          <div class="pv-line short"></div>
+        </div>
+        <div class="pv-block">
+          <div class="pv-block-tag">Further Exploration</div>
+          <div class="pv-line full"></div>
+          <div class="pv-line short"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" style="padding-top:0;">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div style="margin-bottom:3rem;">
+        <p class="section-eyebrow">Features</p>
+        <h2 class="section-title">Built for the way<br>experts actually research</h2>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+          </div>
+          <div class="feature-title">Socratic Profiling</div>
+          <div class="feature-desc">A multi-turn dialogue maps your expertise, goals, and learning style before any search begins.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253"/></svg>
+          </div>
+          <div class="feature-title">Live Web Intelligence</div>
+          <div class="feature-desc">Gemini 2.5 Pro queries and synthesizes real-time data — not stale pre-trained knowledge.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          </div>
+          <div class="feature-title">Discovery Briefs</div>
+          <div class="feature-desc">Narrative-driven research reports tailored to your personal profile — not generic summaries.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+          </div>
+          <div class="feature-title">Hyper-Personalization</div>
+          <div class="feature-desc">Same question from a student and an expert yields completely different, appropriately calibrated briefs.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+          </div>
+          <div class="feature-title">Vite-Powered</div>
+          <div class="feature-desc">Sub-second hot module replacement and fast production builds with end-to-end TypeScript.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
+          </div>
+          <div class="feature-title">5-Minute Setup</div>
+          <div class="feature-desc">Plug in your free Gemini API key and go. No accounts required beyond a Google login.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech stack -->
+  <div class="stack-section no-print">
+    <div class="stack-inner">
+      <div class="stack-header">
+        <p class="section-eyebrow stack-eyebrow">Tech stack</p>
+        <h2 class="section-title stack-title">Built on modern,<br>lean TypeScript</h2>
+      </div>
+      <div class="stack-grid">
+        <div class="stack-item">
+          <div class="stack-layer">Language</div>
+          <div class="stack-tech">TypeScript</div>
+          <div class="stack-desc">85.9% of the codebase. Type-safe, maintainable, scalable.</div>
+        </div>
+        <div class="stack-item">
+          <div class="stack-layer">Frontend</div>
+          <div class="stack-tech">React 19</div>
+          <div class="stack-desc">Component-based UI with reactive state management.</div>
+        </div>
+        <div class="stack-item">
+          <div class="stack-layer">Build tool</div>
+          <div class="stack-tech">Vite</div>
+          <div class="stack-desc">Sub-second HMR and fast production builds.</div>
+        </div>
+        <div class="stack-item">
+          <div class="stack-layer">AI engine</div>
+          <div class="stack-tech">Gemini 2.5 Pro</div>
+          <div class="stack-desc">Live web grounding, multi-step reasoning, synthesis.</div>
+        </div>
+        <div class="stack-item">
+          <div class="stack-layer">Styling</div>
+          <div class="stack-tech">Tailwind CSS</div>
+          <div class="stack-desc">Utility-first, responsive, consistent design tokens.</div>
+        </div>
+        <div class="stack-item">
+          <div class="stack-layer">Environment</div>
+          <div class="stack-tech">.env.local</div>
+          <div class="stack-desc">Secure, local API key management. Never committed.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setup -->
+  <section class="section" id="setup">
+    <div class="setup-inner">
+      <div style="margin-bottom:3rem;">
+        <p class="section-eyebrow">Getting started</p>
+        <h2 class="section-title">Running in<br>under 5 minutes</h2>
+      </div>
+      <div class="setup-steps">
+        <div class="setup-step">
+          <div class="step-num-wrap">
+            <div class="step-num">1</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="setup-content">
+            <div class="setup-title">Clone the repository</div>
+            <div class="setup-desc">Pull the project to your local machine using Git.</div>
+            <div class="code-block"><span class="cmd">git</span> clone https://github.com/lochanharishwar/SYSTEMATIC-SEARCH.git
+<span class="cmd">cd</span> SYSTEMATIC-SEARCH</div>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num-wrap">
+            <div class="step-num">2</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="setup-content">
+            <div class="setup-title">Install dependencies</div>
+            <div class="setup-desc">Requires Node.js v18+. Install all project dependencies with npm.</div>
+            <div class="code-block"><span class="cmd">npm</span> install</div>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num-wrap">
+            <div class="step-num">3</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="setup-content">
+            <div class="setup-title">Add your Gemini API key</div>
+            <div class="setup-desc">Open <code class="code-pill">.env.local</code> and paste your key. Get one free at <a href="https://aistudio.google.com/apikey" style="color:var(--gold);text-decoration:none;" target="_blank">aistudio.google.com</a>.</div>
+            <div class="code-block"><span class="comment"># .env.local</span>
+GEMINI_API_KEY=<span class="string">your_key_here</span></div>
+          </div>
+        </div>
+        <div class="setup-step" style="border-bottom:none;">
+          <div class="step-num-wrap">
+            <div class="step-num">4</div>
+          </div>
+          <div class="setup-content">
+            <div class="setup-title">Start the dev server</div>
+            <div class="setup-desc">Launch the app locally. Go fullscreen for the best experience.</div>
+            <div class="code-block"><span class="cmd">npm</span> run dev
+<span class="comment"># → http://localhost:5173</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section no-print">
+    <h2 class="cta-title">Ready to search<br><em style="font-family:'DM Serif Display',serif;font-style:italic;">differently?</em></h2>
+    <p class="cta-sub">No setup required. Try the live app in under 10 seconds.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="https://ai.studio/apps/drive/1Lv4BQMfnGRfs70-XMWqjWgajDDJ0EYU6" class="btn-primary" target="_blank" rel="noopener">
+        Open live app
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+      <a href="https://github.com/lochanharishwar/SYSTEMATIC-SEARCH" class="btn-ghost" target="_blank" rel="noopener">Star on GitHub</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer no-print">
+    <span class="footer-copy">© 2026 Lochan Harishwar · Systematic Search</span>
+    <div class="footer-links">
+      <a href="https://github.com/lochanharishwar/SYSTEMATIC-SEARCH" class="footer-link" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/lochanharishwar/SYSTEMATIC-SEARCH/issues" class="footer-link" target="_blank" rel="noopener">Issues</a>
+      <a href="https://www.linkedin.com/in/k-m-lochan-harishwar/" class="footer-link" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </footer>
+
+  <!-- React app mounts here -->
   <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+
+  <script type="module" src="/index.tsx"></script>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loader = document.getElementById('app-loader');
+        if (loader) loader.classList.add('hidden');
+      }, 1600);
+    });
+  </script>
 </body>
 </html>
